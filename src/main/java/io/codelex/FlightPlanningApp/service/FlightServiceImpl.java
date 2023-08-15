@@ -10,7 +10,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class FlightServiceImpl implements FlightService{
@@ -32,6 +31,7 @@ public class FlightServiceImpl implements FlightService{
 
         Airport fromAirport = request.getFrom();
         Airport toAirport = request.getTo();
+
 
         Airport checkIfAirportExistFrom = airportRepository.findAirportByAirport(fromAirport.getAirport());
         if (checkIfAirportExistFrom != null){
@@ -66,16 +66,18 @@ public class FlightServiceImpl implements FlightService{
     }
 
     private synchronized boolean flightExists(Flight request) {
-        List<Flight> flightMatch = flightRepository.findByFromAndToAndCarrierAndDepartureTimeAndArrivalTime(
+        Flight flightMatch = flightRepository.findByFromAndToAndCarrierAndDepartureTimeAndArrivalTime(
                 request.getFrom(),
                 request.getTo(),
                 request.getCarrier(),
                 request.getDepartureTime(),
                 request.getArrivalTime());
-        return flightMatch !=null && !flightMatch.isEmpty();
+        return flightMatch !=null;
     }
     private boolean correctValues(Flight request) {
         return isCarrierValid(request.getCarrier())
+                || checkNull(request.getFrom())
+                || checkNull(request.getTo())
                 || isDateValid(request.getDepartureTime(), request.getArrivalTime())
                 || request.getDepartureTime().equals(request.getArrivalTime())
                 || isValueValid(request.getFrom().getCity())
@@ -97,13 +99,16 @@ public class FlightServiceImpl implements FlightService{
         return value == null || value.isBlank();
     }
 
+    private boolean checkNull(Airport airport){
+        return airport == null;
+    }
+
     private boolean isAirportValid(String value) {
         String regex = "^[a-zA-Z0-9 -]+$";
         return value == null || value.isBlank() || value.isEmpty() || !value.matches(regex);
     }
 
     private boolean isDateValid(LocalDateTime departure, LocalDateTime arrival) {
-//        String dateRegex = "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}$";
         return departure == null || arrival == null || !departure.isBefore(arrival);
     }
 
@@ -117,15 +122,15 @@ public class FlightServiceImpl implements FlightService{
     }
 
     @Override
-    public List<Flight> findFlight(Flight request) {
-        List<Flight> foundedFlight = flightRepository
+    public Flight findFlight(Flight request) {
+        Flight foundedFlight = flightRepository
                 .findByFromAndToAndCarrierAndDepartureTimeAndArrivalTime(
                         request.getFrom(), request.getTo(), request.getCarrier(),
                         request.getDepartureTime(), request.getArrivalTime());
         if (foundedFlight != null) {
             return foundedFlight;
         }
-        return List.of(request);
+        return request;
     }
 
     @Override

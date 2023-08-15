@@ -3,6 +3,7 @@ package io.codelex.FlightPlanningApp.controller;
 import io.codelex.FlightPlanningApp.service.FlightService;
 import io.codelex.FlightPlanningApp.model.Airport;
 import io.codelex.FlightPlanningApp.model.Flight;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,9 +23,9 @@ public class FlightController {
     @PutMapping("/flights")
     @ResponseStatus(HttpStatus.CREATED)
     @ResponseBody
-    public synchronized void addFlight(@RequestBody Flight request) {
+    public synchronized Flight addFlight(@Valid @RequestBody Flight request) {
         flightService.addFlight(request);
-        List<Flight> foundedFlight = flightService.findFlight(request);
+        return flightService.findFlight(request);
     }
 
     @PostMapping("/clear")
