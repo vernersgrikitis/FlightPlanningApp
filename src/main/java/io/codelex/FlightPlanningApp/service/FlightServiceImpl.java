@@ -13,7 +13,6 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -29,7 +28,7 @@ public class FlightServiceImpl implements FlightService{
 
 
     @Override
-    public void addFlight(Flight request) {
+    public synchronized void addFlight(Flight request) {
         if (validateFlight(request)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
@@ -134,18 +133,18 @@ public class FlightServiceImpl implements FlightService{
     }
 
     @Override
-    public Flight findFlight(Flight request) {
+    public synchronized Flight findFlight(Flight request) {
         return flightRepository.findByFromAndToAndCarrierAndDepartureTimeAndArrivalTime(
                 request.getFrom(), request.getTo(), request.getCarrier(),
                 request.getDepartureTime(), request.getArrivalTime());
     }
 
     @Override
-    public synchronized Object findFlightResponse(Flight request) {
+    public synchronized void findFlightResponse(Flight request) {
         if (validateFlight(request)) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } else {
-            return new ResponseEntity<>(flightRequest(request), HttpStatus.OK);
+            new ResponseEntity<>(flightRequest(request), HttpStatus.OK);
         }
     }
 
@@ -163,7 +162,16 @@ public class FlightServiceImpl implements FlightService{
         return response;
     }
     @Override
-    public void deleteFlightById(int id) {
+    public synchronized void deleteFlightById(int id) {
         flightRepository.findFlightById(id);
+    }
+
+    public synchronized List<Airport> searchAirports(String phrase) {
+        if (phrase.equals(null) || phrase.isBlank() || phrase.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        } else {
+            List<Airport> foundedAirports = airportRepository.searchAirportsByPhrase(phrase);
+            return foundedAirports;
+        }
     }
 }

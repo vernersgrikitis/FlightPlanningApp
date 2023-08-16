@@ -8,6 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Optional;
+
 
 @RestController
 @RequestMapping({"/admin-api", "/testing-api", "/api"})
@@ -48,10 +51,10 @@ public class FlightController {
         flightService.deleteFlightById(id);
     }
 
-//    @GetMapping("/airports")
-//    public  List<Airport> searchAirports(@RequestParam String phrase) {
-//        return flightPlannerService.searchAirports(phrase);
-//    }
-
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping("/airports")
+    public List<Airport> searchAirports(String phrase) {
+        return flightService.searchAirports(phrase);
+    }
 
 }
