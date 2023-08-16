@@ -2,14 +2,19 @@ package io.codelex.FlightPlanningApp.service;
 
 import io.codelex.FlightPlanningApp.model.Airport;
 import io.codelex.FlightPlanningApp.model.Flight;
+import io.codelex.FlightPlanningApp.model.SearchFlightsResponse;
 import io.codelex.FlightPlanningApp.repository.AirportRepository;
 import io.codelex.FlightPlanningApp.repository.FlightRepository;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class FlightServiceImpl implements FlightService{
@@ -117,22 +122,46 @@ public class FlightServiceImpl implements FlightService{
         flightRepository.deleteAll();
     }
 
-    public Flight findFlightById(int id) {
-        return flightRepository.findFlightById(id);
+    public synchronized ResponseEntity<Flight> findFlightById(int id) {
+        Optional<Flight> flightOptional = flightRepository.findFlightById(id);
+
+        if(flightOptional.isPresent()){
+            Flight foundedFlight = flightOptional.get();
+            return new ResponseEntity<>(foundedFlight, HttpStatus.OK);
+        } else {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
     }
 
     @Override
     public Flight findFlight(Flight request) {
-        Flight foundedFlight = flightRepository
-                .findByFromAndToAndCarrierAndDepartureTimeAndArrivalTime(
-                        request.getFrom(), request.getTo(), request.getCarrier(),
-                        request.getDepartureTime(), request.getArrivalTime());
-        if (foundedFlight != null) {
-            return foundedFlight;
-        }
-        return request;
+        return flightRepository.findByFromAndToAndCarrierAndDepartureTimeAndArrivalTime(
+                request.getFrom(), request.getTo(), request.getCarrier(),
+                request.getDepartureTime(), request.getArrivalTime());
     }
 
+    @Override
+    public synchronized Object findFlightResponse(Flight request) {
+        if (validateFlight(request)) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        } else {
+            return new ResponseEntity<>(flightRequest(request), HttpStatus.OK);
+        }
+    }
+
+    private synchronized SearchFlightsResponse flightRequest(Flight request) {
+        Flight flightToFind = findFlight(request);
+
+        List<Flight> foundedFlights = new ArrayList<>();
+        foundedFlights.add(flightToFind);
+
+        SearchFlightsResponse response = new SearchFlightsResponse();
+        response.setItems(foundedFlights);
+        response.setPage(0);
+        response.setTotalItems(foundedFlights.size());
+
+        return response;
+    }
     @Override
     public void deleteFlightById(int id) {
         flightRepository.findFlightById(id);
