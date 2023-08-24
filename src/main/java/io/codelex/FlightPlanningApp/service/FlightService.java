@@ -1,5 +1,6 @@
 package io.codelex.FlightPlanningApp.service;
 
+import io.codelex.FlightPlanningApp.model.Airport;
 import io.codelex.FlightPlanningApp.model.Flight;
 import org.springframework.http.ResponseEntity;
 
@@ -14,7 +15,11 @@ public interface FlightService {
 
     void deleteFlightById(int id);
 
-    Flight findFlightById(int id);
+    ResponseEntity<Flight> findFlightById(int id);
 
-    List<Flight> findFlight(Flight request);
+    Flight findFlight(Flight request);
+
+    void findFlightResponse(Flight request);
+
+    List<Airport> searchAirports(String phrase);
 }

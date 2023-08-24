@@ -1,7 +1,12 @@
 package io.codelex.FlightPlanningApp.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -13,6 +18,7 @@ public class Flight {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "from_airport", referencedColumnName = "airport")
     private Airport from;
@@ -28,9 +34,14 @@ public class Flight {
     public Flight() {
     }
 
-    public Flight(Airport from, Airport to, String carrier, LocalDateTime departureTime, LocalDateTime arrivalTime) {
-        this.from = from;
-        this.to = to;
+    @JsonCreator
+    public Flight(@JsonProperty("from") Airport fromAirport,
+                  @JsonProperty("to") Airport toAirport,
+                  @JsonProperty("carrier") String carrier,
+                  @JsonProperty("departureTime") LocalDateTime departureTime,
+                  @JsonProperty("arrivalTime") LocalDateTime arrivalTime) {
+        this.from = fromAirport;
+        this.to = toAirport;
         this.carrier = carrier;
         this.departureTime = departureTime;
         this.arrivalTime = arrivalTime;

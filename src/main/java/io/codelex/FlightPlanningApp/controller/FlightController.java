@@ -3,11 +3,14 @@ package io.codelex.FlightPlanningApp.controller;
 import io.codelex.FlightPlanningApp.service.FlightService;
 import io.codelex.FlightPlanningApp.model.Airport;
 import io.codelex.FlightPlanningApp.model.Flight;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+
 
 @RestController
 @RequestMapping({"/admin-api", "/testing-api", "/api"})
@@ -22,9 +25,9 @@ public class FlightController {
     @PutMapping("/flights")
     @ResponseStatus(HttpStatus.CREATED)
     @ResponseBody
-    public synchronized void addFlight(@RequestBody Flight request) {
+    public synchronized Flight addFlight(@Valid @RequestBody Flight request) {
         flightService.addFlight(request);
-        List<Flight> foundedFlight = flightService.findFlight(request);
+        return flightService.findFlight(request);
     }
 
     @PostMapping("/clear")
@@ -32,13 +35,14 @@ public class FlightController {
         flightService.clear();
     }
 
-//    @PostMapping("/flights/search")
-//    public Object searchFlights(@RequestBody SearchFlightsRequest searchFlightsRequest) {
-//            return flightPlannerService.searchFlights(searchFlightsRequest);
-//    }
+    @PostMapping("/flights/search")
+    public void searchFlights(@RequestBody Flight request) {
+        flightService.findFlightResponse(request);
+    }
 
+    @ResponseBody
     @GetMapping({"/flights/{id}"})
-    public Flight findFlightById(@PathVariable("id") int id) {
+    public ResponseEntity<Flight> findFlightById(@PathVariable("id") int id) {
         return flightService.findFlightById(id);
     }
 
@@ -47,10 +51,10 @@ public class FlightController {
         flightService.deleteFlightById(id);
     }
 
-//    @GetMapping("/airports")
-//    public  List<Airport> searchAirports(@RequestParam String phrase) {
-//        return flightPlannerService.searchAirports(phrase);
-//    }
-
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping("/airports")
+    public List<Airport> searchAirports(@RequestParam (required = false) String phrase) {
+        return flightService.searchAirports(phrase);
+    }
 
 }

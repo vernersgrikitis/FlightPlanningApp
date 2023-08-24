@@ -13,11 +13,11 @@ import java.util.Optional;
 @Repository
 public interface FlightRepository extends JpaRepository<Flight, Integer> {
 
-    Flight findFlightById(int id);
+    Optional<Flight> findFlightById(int id);
 
-    List<Flight> findByFromAndToAndCarrierAndDepartureTimeAndArrivalTime(
+    Flight findByFromAndToAndCarrierAndDepartureTimeAndArrivalTime(
             Airport from, Airport to, String carrier, LocalDateTime departureTime, LocalDateTime arrivalTime
     );
 
-
+    void deleteFlightById(int id);
 }

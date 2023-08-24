@@ -1,14 +1,14 @@
 package io.codelex.FlightPlanningApp.service;
 
-import io.codelex.FlightPlanningApp.model.Airport;
-import io.codelex.FlightPlanningApp.model.Flight;
-import io.codelex.FlightPlanningApp.repository.AirportRepository;
-import io.codelex.FlightPlanningApp.repository.FlightRepository;
+import io.codelex.FlightPlanningApp.model.*;
+import io.codelex.FlightPlanningApp.repository.*;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,13 +25,14 @@ public class FlightServiceImpl implements FlightService{
 
 
     @Override
-    public void addFlight(Flight request) {
+    public synchronized void addFlight(Flight request) {
         if (validateFlight(request)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
         Airport fromAirport = request.getFrom();
         Airport toAirport = request.getTo();
+
 
         Airport checkIfAirportExistFrom = airportRepository.findAirportByAirport(fromAirport.getAirport());
         if (checkIfAirportExistFrom != null){
@@ -66,16 +67,18 @@ public class FlightServiceImpl implements FlightService{
     }
 
     private synchronized boolean flightExists(Flight request) {
-        List<Flight> flightMatch = flightRepository.findByFromAndToAndCarrierAndDepartureTimeAndArrivalTime(
+        Flight flightMatch = flightRepository.findByFromAndToAndCarrierAndDepartureTimeAndArrivalTime(
                 request.getFrom(),
                 request.getTo(),
                 request.getCarrier(),
                 request.getDepartureTime(),
                 request.getArrivalTime());
-        return flightMatch !=null && !flightMatch.isEmpty();
+        return flightMatch !=null;
     }
     private boolean correctValues(Flight request) {
         return isCarrierValid(request.getCarrier())
+                || checkNull(request.getFrom())
+                || checkNull(request.getTo())
                 || isDateValid(request.getDepartureTime(), request.getArrivalTime())
                 || request.getDepartureTime().equals(request.getArrivalTime())
                 || isValueValid(request.getFrom().getCity())
@@ -97,13 +100,16 @@ public class FlightServiceImpl implements FlightService{
         return value == null || value.isBlank();
     }
 
+    private boolean checkNull(Airport airport){
+        return airport == null;
+    }
+
     private boolean isAirportValid(String value) {
         String regex = "^[a-zA-Z0-9 -]+$";
         return value == null || value.isBlank() || value.isEmpty() || !value.matches(regex);
     }
 
     private boolean isDateValid(LocalDateTime departure, LocalDateTime arrival) {
-//        String dateRegex = "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}$";
         return departure == null || arrival == null || !departure.isBefore(arrival);
     }
 
@@ -112,24 +118,60 @@ public class FlightServiceImpl implements FlightService{
         flightRepository.deleteAll();
     }
 
-    public Flight findFlightById(int id) {
-        return flightRepository.findFlightById(id);
-    }
+    public synchronized ResponseEntity<Flight> findFlightById(int id) {
+        Optional<Flight> flightOptional = flightRepository.findFlightById(id);
 
-    @Override
-    public List<Flight> findFlight(Flight request) {
-        List<Flight> foundedFlight = flightRepository
-                .findByFromAndToAndCarrierAndDepartureTimeAndArrivalTime(
-                        request.getFrom(), request.getTo(), request.getCarrier(),
-                        request.getDepartureTime(), request.getArrivalTime());
-        if (foundedFlight != null) {
-            return foundedFlight;
+        if(flightOptional.isPresent()){
+            Flight foundedFlight = flightOptional.get();
+            return new ResponseEntity<>(foundedFlight, HttpStatus.OK);
+        } else {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
-        return List.of(request);
     }
 
     @Override
-    public void deleteFlightById(int id) {
-        flightRepository.findFlightById(id);
+    public synchronized Flight findFlight(Flight request) {
+        return flightRepository.findByFromAndToAndCarrierAndDepartureTimeAndArrivalTime(
+                request.getFrom(), request.getTo(), request.getCarrier(),
+                request.getDepartureTime(), request.getArrivalTime());
+    }
+
+    @Override
+    public synchronized void findFlightResponse(Flight request) {
+        if (validateFlight(request)) {
+            new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        } else {
+            new ResponseEntity<>(flightRequest(request), HttpStatus.OK);
+        }
+    }
+
+    private synchronized SearchFlightsResponse flightRequest(Flight request) {
+        Flight flightToFind = findFlight(request);
+
+        List<Flight> foundedFlights = new ArrayList<>();
+        foundedFlights.add(flightToFind);
+
+        SearchFlightsResponse response = new SearchFlightsResponse();
+        response.setItems(foundedFlights);
+        response.setPage(0);
+        response.setTotalItems(foundedFlights.size());
+
+        return response;
+    }
+    @Override
+    public synchronized void deleteFlightById(int id) {
+        Optional<Flight> foundedFlight = flightRepository.findFlightById(id);
+
+        if(foundedFlight.isPresent()){
+            flightRepository.deleteFlightById(id);
+        } else {
+            throw new ResponseStatusException(HttpStatus.OK);
+        }
+        throw new ResponseStatusException(HttpStatus.OK);
+    }
+
+    public synchronized List<Airport> searchAirports(String phrase) {
+        String cleanPhrase =  phrase.replace(" ", "");
+        return airportRepository.searchAirportsByPhrase(cleanPhrase);
     }
 }
