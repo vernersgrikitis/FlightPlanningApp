@@ -73,8 +73,8 @@ public class InMemoryService implements FlightService {
     }
 
     private boolean correctValues(Flight request) {
-//        String departureTimeString = request.getDepartureTime().toString();
-//        String arrivalTimeString = request.getArrivalTime().toString();
+        String departureTimeString = request.getDepartureTime().toString();
+        String arrivalTimeString = request.getArrivalTime().toString();
 
         return isCarrierValid(request.getCarrier())
                 || isDateValid(departureTimeString, arrivalTimeString)
