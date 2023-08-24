@@ -19,5 +19,5 @@ public interface FlightRepository extends JpaRepository<Flight, Integer> {
             Airport from, Airport to, String carrier, LocalDateTime departureTime, LocalDateTime arrivalTime
     );
 
-
+    void deleteFlightById(int id);
 }

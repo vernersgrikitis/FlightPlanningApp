@@ -1,5 +1,7 @@
 package io.codelex.FlightPlanningApp.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
 import java.util.Objects;
@@ -15,13 +17,16 @@ public class Airport {
     @Column(name = "city")
     private String city;
 
-    public Airport() {
-    }
-
-    public Airport(String airport, String country, String city) {
+    @JsonCreator
+    public Airport(@JsonProperty("airport") String airport,
+                   @JsonProperty("country") String country,
+                   @JsonProperty("city") String city) {
         this.airport = airport;
         this.country = country;
         this.city = city;
+    }
+
+    public Airport() {
     }
 
     public String getAirport() {

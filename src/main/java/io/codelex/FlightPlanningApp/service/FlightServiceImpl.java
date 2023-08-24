@@ -1,10 +1,7 @@
 package io.codelex.FlightPlanningApp.service;
 
-import io.codelex.FlightPlanningApp.model.Airport;
-import io.codelex.FlightPlanningApp.model.Flight;
-import io.codelex.FlightPlanningApp.model.SearchFlightsResponse;
-import io.codelex.FlightPlanningApp.repository.AirportRepository;
-import io.codelex.FlightPlanningApp.repository.FlightRepository;
+import io.codelex.FlightPlanningApp.model.*;
+import io.codelex.FlightPlanningApp.repository.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -163,15 +160,18 @@ public class FlightServiceImpl implements FlightService{
     }
     @Override
     public synchronized void deleteFlightById(int id) {
-        flightRepository.findFlightById(id);
+        Optional<Flight> foundedFlight = flightRepository.findFlightById(id);
+
+        if(foundedFlight.isPresent()){
+            flightRepository.deleteFlightById(id);
+        } else {
+            throw new ResponseStatusException(HttpStatus.OK);
+        }
+        throw new ResponseStatusException(HttpStatus.OK);
     }
 
     public synchronized List<Airport> searchAirports(String phrase) {
-        if (phrase.equals(null) || phrase.isBlank() || phrase.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-        } else {
-            List<Airport> foundedAirports = airportRepository.searchAirportsByPhrase(phrase);
-            return foundedAirports;
-        }
+        String cleanPhrase =  phrase.replace(" ", "");
+        return airportRepository.searchAirportsByPhrase(cleanPhrase);
     }
 }

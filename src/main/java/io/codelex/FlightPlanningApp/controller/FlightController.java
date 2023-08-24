@@ -53,7 +53,7 @@ public class FlightController {
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/airports")
-    public List<Airport> searchAirports(String phrase) {
+    public List<Airport> searchAirports(@RequestParam (required = false) String phrase) {
         return flightService.searchAirports(phrase);
     }
 
