@@ -47,7 +47,7 @@ public class Flight {
         this.arrivalTime = arrivalTime;
     }
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
